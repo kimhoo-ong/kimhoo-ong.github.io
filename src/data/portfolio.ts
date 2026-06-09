@@ -8,13 +8,13 @@ import {
   Cloud,
   Database,
   Factory,
-  GitBranch,
   Layers3,
   Mail,
   Network,
   Presentation,
   Workflow,
 } from "lucide-react";
+import { GithubIcon, LinkedinIcon } from "@/components/BrandIcons";
 
 export type Skill = {
   name: string;
@@ -51,11 +51,11 @@ export const profile = {
 export const navItems = ["About", "Journey"];
 
 export const socialLinks = [
-  { label: "GitHub", href: "https://github.com/kimhoo-ong", icon: GitBranch },
+  { label: "GitHub", href: "https://github.com/kimhoo-ong", icon: GithubIcon },
   {
     label: "LinkedIn",
     href: "https://www.linkedin.com/in/kim-hoo-ong-155282117",
-    icon: Network,
+    icon: LinkedinIcon,
   },
   { label: "Email", href: "mailto:adexong@gmail.com", icon: Mail },
 ];
