@@ -6,13 +6,16 @@ import {
   BarChart3,
   BrainCircuit,
   GraduationCap,
+  Pause,
   Plane,
+  Play,
   Rocket,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { currentlyLearning, timelineStages } from "@/data/portfolio";
+import type { TimelineStage as TimelineStageData } from "@/data/portfolio";
 import { CurrentlyLearningPanel } from "./CurrentlyLearningPanel";
 import { RunnerCharacter } from "./RunnerCharacter";
 import { TimelineStage } from "./TimelineStage";
@@ -52,20 +55,92 @@ export function AutoRunnerTimeline({
 }: AutoRunnerTimelineProps) {
   const progress = useMotionValue(0);
   const skylineRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const [bursts, setBursts] = useState<Burst[]>([]);
+  const [paused, setPaused] = useState(false);
+  const detailRef = useRef<HTMLElement>(null);
+  const [detail, setDetail] = useState<{
+    stage: TimelineStageData;
+    left: number;
+    bottom: number;
+    width: number;
+    maxH: number;
+    measured: boolean;
+  } | null>(null);
+
+  const openDetail = (stage: TimelineStageData, el: HTMLElement) => {
+    const sec = sectionRef.current;
+    if (!sec) return;
+    const sr = sec.getBoundingClientRect();
+    const cr = el.getBoundingClientRect();
+    const bottom = Math.round(sr.bottom - cr.bottom);
+    const width = Math.min(
+      Math.max(Math.round(cr.width), 320),
+      Math.round(sr.width - 28),
+    );
+    let left = cr.left + cr.width / 2 - sr.left;
+    left = Math.min(Math.max(left, width / 2 + 10), sr.width - width / 2 - 10);
+    setDetail({
+      stage,
+      left: Math.round(left),
+      bottom,
+      width,
+      maxH: Math.round(sr.height - bottom - 8),
+      measured: false,
+    });
+  };
+
+  const closeDetail = () => {
+    setDetail(null);
+  };
+
+  // after the panel renders, grow it upward to the top first, then extend the
+  // bottom downward into the scene if the content still doesn't fit
+  useLayoutEffect(() => {
+    if (!detail || detail.measured) return;
+    const sec = sectionRef.current;
+    const el = detailRef.current;
+    if (!sec || !el) return;
+    const secH = sec.getBoundingClientRect().height;
+    const contentH = el.scrollHeight;
+    const desiredH = Math.min(contentH, Math.round(secH - 16));
+    const topIfKept = secH - detail.bottom - desiredH;
+    const bottom =
+      topIfKept >= 8 ? detail.bottom : Math.max(8, Math.round(secH - 8 - desiredH));
+    setDetail((d) =>
+      d ? { ...d, bottom, maxH: desiredH, measured: true } : d,
+    );
+  }, [detail]);
 
   // mutable per-element crossing state, kept out of render
   const prevSide = useRef<Record<string, number>>({});
   const lastCollectAt = useRef<Record<number, number>>({});
   const lastCoinAt = useRef<Record<string, number>>({});
   const burstSeq = useRef(0);
+  const pausedRef = useRef(false);
+  const elapsedRef = useRef(0);
+  const lastTsRef = useRef(0);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   useEffect(() => {
     let frame = 0;
-    const start = performance.now();
+    lastTsRef.current = performance.now();
 
     const tick = (now: number) => {
-      progress.set(((now - start) % LOOP_MS) / LOOP_MS);
+      const dt = now - lastTsRef.current;
+      lastTsRef.current = now;
+
+      if (pausedRef.current) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+
+      elapsedRef.current += dt;
+      const elapsed = elapsedRef.current;
+      progress.set((elapsed % LOOP_MS) / LOOP_MS);
 
       const sky = skylineRef.current;
       const runner = sky?.querySelector<HTMLElement>(".runner");
@@ -101,7 +176,7 @@ export function AutoRunnerTimeline({
 
           // crossing from right (1) to left (-1) = runner reached the prop
           // (skip the first frames so positions settle before firing)
-          if (prev === 1 && side === -1 && now - start > 400) {
+          if (prev === 1 && side === -1 && elapsed > 400) {
             const last = lastCollectAt.current[stageIndex] ?? -Infinity;
             if (now - last > COLLECT_DEBOUNCE_MS) {
               lastCollectAt.current[stageIndex] = now;
@@ -120,7 +195,7 @@ export function AutoRunnerTimeline({
           const prev = prevSide.current[key];
           prevSide.current[key] = side;
 
-          if (prev === 1 && side === -1 && now - start > 400) {
+          if (prev === 1 && side === -1 && elapsed > 400) {
             const last = lastCoinAt.current[uid] ?? -Infinity;
             if (now - last > COLLECT_DEBOUNCE_MS) {
               lastCoinAt.current[uid] = now;
@@ -146,11 +221,28 @@ export function AutoRunnerTimeline({
   const fillPct = avatarPct - (0.5 / nodeCount) * 100;
 
   return (
-    <section id="journey" className="runner-section">
+    <section
+      ref={sectionRef}
+      id="journey"
+      className={["runner-section", paused ? "journey-paused" : ""].join(" ")}
+    >
       <div className="journey-ribbon">
         <span>✦</span>
         <span>My Journey So Far</span>
         <span>✦</span>
+        <button
+          type="button"
+          className="journey-pause-btn"
+          onClick={() => setPaused((p) => !p)}
+          aria-label={paused ? "Resume journey" : "Pause journey"}
+          aria-pressed={paused}
+        >
+          {paused ? (
+            <Play className="size-4" aria-hidden="true" />
+          ) : (
+            <Pause className="size-4" aria-hidden="true" />
+          )}
+        </button>
       </div>
 
       <div className="skyline" ref={skylineRef}>
@@ -162,8 +254,13 @@ export function AutoRunnerTimeline({
         <div className="mountains mountains-front" />
 
         <motion.div className="world-track" style={{ x: worldX }}>
-          <SceneSet activeIndex={activeIndex} setIndex={0} />
-          <SceneSet activeIndex={activeIndex} setIndex={1} ariaHidden />
+          <SceneSet activeIndex={activeIndex} setIndex={0} onOpen={openDetail} />
+          <SceneSet
+            activeIndex={activeIndex}
+            setIndex={1}
+            ariaHidden
+            onOpen={openDetail}
+          />
         </motion.div>
 
         <RunnerCharacter era={runnerEra} />
@@ -235,6 +332,90 @@ export function AutoRunnerTimeline({
 
         <CurrentlyLearningPanel items={currentlyLearning} />
       </div>
+
+      {detail && (
+        <>
+          <div className="stage-detail-backdrop" onClick={closeDetail} />
+          <article
+            ref={detailRef}
+            className="stage-detail"
+            style={
+              {
+                left: detail.left,
+                bottom: detail.bottom,
+                width: detail.width,
+                maxHeight: detail.maxH,
+                "--accent": detail.stage.accent,
+              } as CSSProperties
+            }
+          >
+            <button
+              type="button"
+              className="stage-detail-close"
+              onClick={closeDetail}
+              aria-label="Close details"
+            >
+              ✕
+            </button>
+            <p
+              className="text-sm font-black"
+              style={{ color: detail.stage.accent }}
+            >
+              {detail.stage.period}
+            </p>
+            <h3 className="mt-1 text-lg font-black leading-tight text-slate-950">
+              {detail.stage.title}
+            </h3>
+            <p className="mt-1 text-xs font-black uppercase tracking-[0.08em] text-slate-500">
+              {detail.stage.organization}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-800">
+              {detail.stage.shortStory}
+            </p>
+
+            <p className="stage-detail-label">Skills Unlocked</p>
+            <div className="flex flex-wrap gap-1">
+              {detail.stage.unlockedSkills.map((s) => (
+                <span
+                  key={s}
+                  className="stage-detail-tag stage-detail-tag-unlocked"
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+
+            <p className="stage-detail-label">Hard Skills</p>
+            <div className="flex flex-wrap gap-1">
+              {detail.stage.hardSkills.map((s) => (
+                <span key={s} className="stage-detail-tag">
+                  {s}
+                </span>
+              ))}
+            </div>
+
+            <p className="stage-detail-label">Soft Skills</p>
+            <div className="flex flex-wrap gap-1">
+              {detail.stage.softSkills.map((s) => (
+                <span key={s} className="stage-detail-tag stage-detail-tag-soft">
+                  {s}
+                </span>
+              ))}
+            </div>
+
+            {detail.stage.highlights.length > 0 && (
+              <>
+                <p className="stage-detail-label">Highlights</p>
+                <ul className="stage-detail-highlights">
+                  {detail.stage.highlights.map((h) => (
+                    <li key={h}>{h}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </article>
+        </>
+      )}
     </section>
   );
 }
@@ -243,10 +424,12 @@ function SceneSet({
   activeIndex,
   setIndex,
   ariaHidden = false,
+  onOpen,
 }: {
   activeIndex: number;
   setIndex: number;
   ariaHidden?: boolean;
+  onOpen?: (stage: TimelineStageData, el: HTMLElement) => void;
 }) {
   return (
     <div className="scene-set" aria-hidden={ariaHidden}>
@@ -262,7 +445,11 @@ function SceneSet({
             } as CSSProperties
           }
         >
-          <TimelineStage stage={stage} active={index === activeIndex} />
+          <TimelineStage
+            stage={stage}
+            active={index === activeIndex}
+            onOpen={onOpen}
+          />
           <span className="milestone-line" />
         </div>
       ))}

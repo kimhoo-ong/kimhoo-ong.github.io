@@ -4,15 +4,19 @@ import type { TimelineStage as TimelineStageData } from "@/data/portfolio";
 type TimelineStageProps = {
   stage: TimelineStageData;
   active: boolean;
+  onOpen?: (stage: TimelineStageData, el: HTMLElement) => void;
 };
 
-export function TimelineStage({ stage, active }: TimelineStageProps) {
+export function TimelineStage({ stage, active, onOpen }: TimelineStageProps) {
   return (
     <article
-      className={["milestone-card", active ? "milestone-card-active" : ""].join(
-        " ",
-      )}
+      className={[
+        "milestone-card",
+        "milestone-card-clickable",
+        active ? "milestone-card-active" : "",
+      ].join(" ")}
       style={{ "--accent": stage.accent } as CSSProperties}
+      onClick={(e) => onOpen?.(stage, e.currentTarget)}
     >
       <p className="text-sm font-black" style={{ color: stage.accent }}>
         {stage.period}

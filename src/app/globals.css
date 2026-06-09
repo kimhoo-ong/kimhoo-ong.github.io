@@ -194,6 +194,166 @@ a {
   color: #ffd36c;
 }
 
+.journey-pause-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: 4px;
+  border: 2px solid #ffd36c;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.journey-pause-btn:hover {
+  background: #ffd36c;
+  color: #202a4a;
+  transform: scale(1.08);
+}
+
+.milestone-card-clickable {
+  cursor: pointer;
+}
+
+/* click-to-expand detail card (rendered above the skyline so it isn't clipped) */
+.stage-detail-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  background: rgba(8, 14, 28, 0.5);
+}
+
+.stage-detail {
+  position: absolute;
+  z-index: 40;
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+  overflow-y: auto;
+  border: 3px solid var(--accent);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.98);
+  padding: 11px 13px 13px;
+  box-shadow:
+    6px 8px 0 rgba(23, 39, 71, 0.18),
+    0 18px 42px rgba(0, 0, 0, 0.3);
+  animation: stage-detail-in 0.26s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.stage-detail h3 {
+  font-size: 1rem;
+}
+
+.stage-detail > p:nth-of-type(3) {
+  line-height: 1.35;
+}
+
+@keyframes stage-detail-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.stage-detail-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.stage-detail-close:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.stage-detail-label {
+  margin-top: 7px;
+  margin-bottom: 3px;
+  font-size: 0.63rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.stage-detail-tag {
+  border: 1.5px solid color-mix(in srgb, var(--accent) 40%, #cbd2dc);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 7%, #fff);
+  padding: 1px 6px;
+  font-size: 0.67rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #2a3340;
+}
+
+.stage-detail-tag-soft {
+  border-color: #cdd5df;
+  background: #f4f6f9;
+  color: #41506a;
+}
+
+.stage-detail-tag-unlocked {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, #fff);
+  color: #1c2430;
+  font-weight: 800;
+}
+
+.stage-detail-highlights {
+  margin: 0;
+  padding-left: 16px;
+  list-style: disc;
+}
+
+.stage-detail-highlights li {
+  margin-bottom: 3px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #2a3340;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-detail {
+    animation-duration: 0.01ms;
+  }
+}
+
+/* freeze the runner / world decorations when paused */
+.journey-paused .runner,
+.journey-paused .runner-sprite,
+.journey-paused .runner-shadow,
+.journey-paused .coin,
+.journey-paused .cloud,
+.journey-paused .stage-object-active,
+.journey-paused .final-portal {
+  animation-play-state: paused;
+}
+
 .skyline {
   position: relative;
   height: clamp(520px, 56vw, 620px);
@@ -1090,19 +1250,14 @@ a {
   transition: left 0.9s cubic-bezier(0.33, 0, 0.2, 1);
 }
 
-/* placeholder until a real avatar PNG is supplied — swap background-image here */
 .year-avatar-sprite {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(circle at 50% 36%, #ffe6c4 0%, #e0a86f 70%, #c98a4f 100%);
-}
-
-.year-avatar-sprite::before {
-  content: "🙂";
-  font-size: 20px;
-  line-height: 1;
+  background-image: url("/avatar.png");
+  background-repeat: no-repeat;
+  background-size: 132%;
+  background-position: center 42%;
+  image-rendering: auto;
 }
 
 .year-node {

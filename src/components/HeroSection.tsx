@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { ArrowDown, Download } from "lucide-react";
-import { navItems, profile, socialLinks } from "@/data/portfolio";
+import { Download } from "lucide-react";
+import { profile, socialLinks } from "@/data/portfolio";
 
 type HeroSectionProps = {
   skillsPanel: ReactNode;
@@ -15,37 +15,22 @@ export function HeroSection({ skillsPanel }: HeroSectionProps) {
           <span className="text-xl text-slate-950">{profile.name}</span>
         </a>
 
-        <div className="hidden items-center gap-8 text-sm font-semibold text-slate-900 lg:flex">
-          {navItems.map((item) => (
-            <a
-              key={item}
-              href={
-                item === "Skills"
-                  ? "#skills"
-                  : item === "Journey" || item === "Projects"
-                    ? "#journey"
-                    : item === "Contact"
-                      ? "#contact"
-                      : "#about"
-              }
-              className="transition hover:text-[#26426f]"
-            >
-              {item}
-            </a>
-          ))}
-        </div>
-
         <div className="flex items-center gap-3">
-          {socialLinks.map(({ label, href, icon: Icon }) => (
-            <a
-              key={label}
-              href={href}
-              aria-label={label}
-              className="grid size-10 place-items-center rounded-md text-[#172747] transition hover:bg-white hover:shadow-sm"
-            >
-              <Icon className="size-5" aria-hidden="true" />
-            </a>
-          ))}
+          {socialLinks.map(({ label, href, icon: Icon }) => {
+            const external = href.startsWith("http");
+            return (
+              <a
+                key={label}
+                href={href}
+                aria-label={label}
+                target={external ? "_blank" : undefined}
+                rel={external ? "noopener noreferrer" : undefined}
+                className="grid size-10 place-items-center rounded-md text-[#172747] transition hover:bg-white hover:shadow-sm"
+              >
+                <Icon className="size-5" aria-hidden="true" />
+              </a>
+            );
+          })}
         </div>
       </nav>
 
@@ -65,9 +50,9 @@ export function HeroSection({ skillsPanel }: HeroSectionProps) {
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row lg:mt-5">
-            <a href="#journey" className="primary-button">
-              View My Work
-              <ArrowDown className="size-4 rotate-[-90deg]" aria-hidden="true" />
+            <a href="/hrdf-certificate.pdf" download className="primary-button">
+              Download HRDF Certificate
+              <Download className="size-4" aria-hidden="true" />
             </a>
             <a href="/resume.pdf" download className="secondary-button">
               Download Resume

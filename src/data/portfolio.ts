@@ -48,12 +48,16 @@ export const profile = {
     "I'm curious about technology, love hands-on learning, and believe consistent effort can turn any skill into a strength.",
 };
 
-export const navItems = ["About", "Skills", "Projects", "Journey", "Contact"];
+export const navItems = ["About", "Journey"];
 
 export const socialLinks = [
-  { label: "GitHub", href: "#", icon: GitBranch },
-  { label: "LinkedIn", href: "#", icon: Network },
-  { label: "Email", href: "mailto:hello@example.com", icon: Mail },
+  { label: "GitHub", href: "https://github.com/kimhoo-ong", icon: GitBranch },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/kim-hoo-ong-155282117",
+    icon: Network,
+  },
+  { label: "Email", href: "mailto:adexong@gmail.com", icon: Mail },
 ];
 
 export const skills: Skill[] = [
